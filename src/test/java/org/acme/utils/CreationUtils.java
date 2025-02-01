@@ -24,11 +24,15 @@ public class CreationUtils {
     }
 
     public static Quiz createAndPersistTestQuiz() {
-        return createAndPersistTestQuiz(false);
+        return createAndPersistTestQuiz(false, false);
+    }
+
+    public static Quiz createAndPersistTestQuiz(boolean isFinished) {
+        return createAndPersistTestQuiz(isFinished, false);
     }
 
     @Transactional
-    public static Quiz createAndPersistTestQuiz(boolean isFinished) {
+    public static Quiz createAndPersistTestQuiz(boolean isFinished, boolean modifyResponse) {
         Question question1 = createAndPersistTestQuestion("Question 1?", List.of(
                 new Selection("Selection 1", true),
                 new Selection("Selection 2"))
@@ -50,6 +54,24 @@ public class CreationUtils {
         Quiz quiz = new Quiz();
         quiz.questions = List.of(answerableQuestion1, answerableQuestion2);
         quiz.isFinished = isFinished;
+
+        if (modifyResponse) {
+            // Simulate answering some questions correctly and some incorrectly
+            AnswerableQuestion answerableQuestion11 = quiz.questions.getFirst();
+            answerableQuestion1.chosenSelection = answerableQuestion1.linkedQuestion.selections.stream()
+                    .filter(selection -> selection.correct)
+                    .findFirst()
+                    .orElseThrow();
+            answerableQuestion11.persist();
+
+            AnswerableQuestion answerableQuestion22 = quiz.questions.get(1);
+            answerableQuestion22.chosenSelection = answerableQuestion2.linkedQuestion.selections.stream()
+                    .filter(selection -> !selection.correct)
+                    .findFirst()
+                    .orElseThrow();
+            answerableQuestion2.persist();
+        }
+
         quiz.persist();
 
         return quiz;

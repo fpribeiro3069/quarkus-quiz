@@ -6,22 +6,25 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lombok.experimental.FieldDefaults;
 
 import java.util.List;
 
 @Entity
-@Getter
-@Setter
+@NoArgsConstructor
+@FieldDefaults(level = AccessLevel.PUBLIC)
+@ToString
 public class Question extends PanacheEntity {
 
     @NotEmpty(message = "Question text can't be empty")
-    public String text;
+    String text;
 
     @OneToMany(orphanRemoval = true)
     @JoinColumn(name = "question_id", nullable = false)
     @NotEmpty(message = "Question selections can't be empty")
     @Valid
-    public List<Selection> selections;
+    List<Selection> selections;
 }

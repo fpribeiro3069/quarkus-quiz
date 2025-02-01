@@ -9,7 +9,7 @@ import org.acme.entity.db.Selection;
 import java.util.List;
 
 import static org.acme.exceptions.BadRequestExceptionBuilder.lessThanTwoSelectionsException;
-import static org.acme.exceptions.BadRequestExceptionBuilder.noCorrectSelectionException;
+import static org.acme.exceptions.BadRequestExceptionBuilder.zeroCorrectSelectionsException;
 
 @ApplicationScoped
 public class QuestionService {
@@ -28,8 +28,8 @@ public class QuestionService {
             throw lessThanTwoSelectionsException();
         }
 
-        if (question.selections.stream().noneMatch(Selection::isCorrect)) {
-            throw noCorrectSelectionException();
+        if (question.selections.stream().noneMatch(selection -> selection.correct)) {
+            throw zeroCorrectSelectionsException();
         }
 
         question.persist();

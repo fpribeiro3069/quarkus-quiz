@@ -8,6 +8,7 @@ import org.acme.entity.db.AnswerableQuestion;
 import org.acme.entity.db.Question;
 import org.acme.entity.db.Quiz;
 import org.acme.entity.db.Selection;
+import org.acme.entity.responses.ResultResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -67,7 +68,7 @@ public class QuizResourceTest {
         // Then
         Quiz createdQuiz = response.as(Quiz.class);
         assertNotNull(createdQuiz.id);
-        assertNotNull(createdQuiz.getCreatedAt());
+        assertNotNull(createdQuiz.createdAt);
         assertEquals(questions.size(), createdQuiz.questions.size());
         assertFalse(createdQuiz.isFinished);
 
@@ -246,5 +247,66 @@ public class QuizResourceTest {
                 .then()
                 .statusCode(400)
                 .body("message", equalTo("Quiz is already finished"));
+    }
+
+    @Test
+    @DisplayName("Get quiz result for a finished quiz should return 200 and the correct result")
+    public void testGetQuizResultForFinishedQuiz() {
+        // Given
+        Quiz quiz = createAndPersistTestQuiz(true, true); // Create a finished quiz
+        Long quizId = quiz.id;
+
+        // When
+        ResultResponse resultResponse = given()
+                .contentType(ContentType.JSON)
+                .pathParam("quizId", quizId)
+                .when()
+                .get("/quiz/{quizId}/result")
+                .then()
+                .statusCode(200)
+                .contentType(ContentType.JSON)
+                .extract()
+                .as(ResultResponse.class);
+
+        // Then
+        assertNotNull(resultResponse);
+        assertEquals(quiz.questions.size(), resultResponse.totalQuestions());
+        assertEquals(2, resultResponse.totalAnsweredQuestions()); // 2 questions answered
+        assertEquals(1, resultResponse.totalCorrectQuestions()); // 1 correct answer
+    }
+
+    @Test
+    @DisplayName("Get quiz result for a non-existent quiz should return 404 with error message")
+    public void testGetQuizResultForNonExistentQuiz() {
+        // Given
+        Long nonExistentQuizId = 999L;
+
+        // When
+        given()
+                .contentType(ContentType.JSON)
+                .pathParam("quizId", nonExistentQuizId)
+                .when()
+                .get("/quiz/{quizId}/result")
+                .then()
+                .statusCode(404)
+                .body("message", equalTo("Quiz could not be found"));
+    }
+
+    @Test
+    @DisplayName("Get quiz result for a quiz that is not finished should return 400 with error message")
+    public void testGetQuizResultForNotFinishedQuiz() {
+        // Given
+        Quiz quiz = createAndPersistTestQuiz(false); // Create an unfinished quiz
+        Long quizId = quiz.id;
+
+        // When
+        given()
+                .contentType(ContentType.JSON)
+                .pathParam("quizId", quizId)
+                .when()
+                .get("/quiz/{quizId}/result")
+                .then()
+                .statusCode(400)
+                .body("message", equalTo("Quiz is not finished yet"));
     }
 }

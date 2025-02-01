@@ -108,7 +108,7 @@ public class QuizService {
     }
 
     @Transactional
-    public Quiz finishQuiz(Long quizId) {
+    public void finishQuiz(Long quizId) {
         // Find quiz
         Optional<Quiz> optionalQuiz = Quiz.findByIdOptional(quizId);
 
@@ -129,7 +129,6 @@ public class QuizService {
         quiz.persist();
 
         log.debug("finishQuiz. final quiz={}", quiz);
-        return quiz;
     }
 
     public ResultResponse getResult(Long quizId) {
@@ -154,9 +153,13 @@ public class QuizService {
 
         final long totalCorrectQuestions = quiz.questions.stream()
                 .filter(answerableQuestion -> answerableQuestion.chosenSelection != null)
-                .filter(answerableQuestion -> answerableQuestion.chosenSelection.isCorrect())
+                .filter(answerableQuestion -> answerableQuestion.chosenSelection.correct)
                 .count();
 
-        return new ResultResponse(quiz.questions.size(), totalAnsweredQuestions, totalCorrectQuestions);
+
+        final ResultResponse resultResponse = new ResultResponse(quiz.questions.size(), totalAnsweredQuestions, totalCorrectQuestions);
+
+        log.debug("getResult. resultResponse={}", resultResponse);
+        return resultResponse;
     }
 }

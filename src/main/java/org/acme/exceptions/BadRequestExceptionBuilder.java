@@ -7,8 +7,8 @@ public class BadRequestExceptionBuilder {
     private BadRequestExceptionBuilder() {
     }
 
-    public static BadRequestException noCorrectSelectionException() {
-        return new BadRequestException("Question can't have no correct selection(s)");
+    public static BadRequestException zeroCorrectSelectionsException() {
+        return new BadRequestException("Question can't have zero correct selection(s)");
     }
 
     public static BadRequestException lessThanTwoSelectionsException() {

@@ -4,25 +4,26 @@ import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Getter
-@Setter
+@NoArgsConstructor
+@FieldDefaults(level = AccessLevel.PUBLIC)
 public class Quiz extends PanacheEntity {
 
     @OneToMany(orphanRemoval = true)
     @JoinColumn(name = "quiz_id")
-    public List<AnswerableQuestion> questions;
+    List<AnswerableQuestion> questions;
 
-    public boolean isFinished;
+    boolean isFinished;
 
-    public LocalDateTime finishedAt;
+    LocalDateTime finishedAt;
 
     @CreationTimestamp
     LocalDateTime createdAt;

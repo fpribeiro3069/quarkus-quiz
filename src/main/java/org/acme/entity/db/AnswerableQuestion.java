@@ -4,17 +4,16 @@ import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ManyToOne;
-import lombok.Getter;
+import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Getter
-@Setter
 @NoArgsConstructor
+@FieldDefaults(level = AccessLevel.PUBLIC)
 public class AnswerableQuestion extends PanacheEntity {
 
     public AnswerableQuestion(Question linkedQuestion) {
@@ -22,10 +21,10 @@ public class AnswerableQuestion extends PanacheEntity {
     }
 
     @ManyToOne(optional = false, fetch = FetchType.EAGER)
-    public Question linkedQuestion;
+    Question linkedQuestion;
 
     @ManyToOne
-    public Selection chosenSelection;
+    Selection chosenSelection;
 
     @UpdateTimestamp
     LocalDateTime updatedAt;
