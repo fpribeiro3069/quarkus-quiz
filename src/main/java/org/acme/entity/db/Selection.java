@@ -1,19 +1,22 @@
-package org.acme.entity;
+package org.acme.entity.db;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.Entity;
 import jakarta.validation.constraints.NotEmpty;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
+@Getter
+@Setter
+@NoArgsConstructor
 public class Selection extends PanacheEntity {
 
     @NotEmpty(message = "Selection text can't be empty")
-    String text;
+    public String text;
 
-    boolean correct;
-
-    public Selection() {
-    }
+    public boolean correct;
 
     public Selection(String text, boolean correct) {
         this.text = text;
@@ -23,21 +26,5 @@ public class Selection extends PanacheEntity {
     public Selection(String text) {
         this.text = text;
         this.correct = false;
-    }
-
-    public String getText() {
-        return text;
-    }
-
-    public void setText(String text) {
-        this.text = text;
-    }
-
-    public boolean isCorrect() {
-        return correct;
-    }
-
-    public void setCorrect(boolean correct) {
-        this.correct = correct;
     }
 }

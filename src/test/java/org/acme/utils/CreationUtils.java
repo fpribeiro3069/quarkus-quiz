@@ -1,10 +1,10 @@
 package org.acme.utils;
 
 import jakarta.transaction.Transactional;
-import org.acme.entity.AnswerableQuestion;
-import org.acme.entity.Question;
-import org.acme.entity.Quiz;
-import org.acme.entity.Selection;
+import org.acme.entity.db.AnswerableQuestion;
+import org.acme.entity.db.Question;
+import org.acme.entity.db.Quiz;
+import org.acme.entity.db.Selection;
 
 import java.util.List;
 

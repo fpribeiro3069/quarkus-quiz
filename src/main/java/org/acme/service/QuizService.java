@@ -2,10 +2,13 @@ package org.acme.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
-import org.acme.entity.AnswerableQuestion;
-import org.acme.entity.Question;
-import org.acme.entity.Quiz;
-import org.acme.entity.Selection;
+import org.acme.entity.db.AnswerableQuestion;
+import org.acme.entity.db.Question;
+import org.acme.entity.db.Quiz;
+import org.acme.entity.db.Selection;
+import org.acme.entity.responses.ResultResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -16,12 +19,15 @@ import java.util.Set;
 
 import static org.acme.exceptions.BadRequestExceptionBuilder.questionNotFoundForQuizCreationException;
 import static org.acme.exceptions.BadRequestExceptionBuilder.quizAlreadyFinishedException;
+import static org.acme.exceptions.BadRequestExceptionBuilder.quizNotFinishedYetException;
 import static org.acme.exceptions.NotFoundExceptionBuilder.questionNotFoundException;
 import static org.acme.exceptions.NotFoundExceptionBuilder.quizNotFoundException;
 import static org.acme.exceptions.NotFoundExceptionBuilder.selectionNotFoundException;
 
 @ApplicationScoped
 public class QuizService {
+
+    private static final Logger log = LoggerFactory.getLogger(QuizService.class);
 
     @Transactional
     public Quiz create(Set<Long> questionIds) {
@@ -30,6 +36,7 @@ public class QuizService {
         for (Long questionId : questionIds) {
             Optional<Question> persistedQuestion = Question.findByIdOptional(questionId);
             if (persistedQuestion.isEmpty()) {
+                log.error("create. question id could not be found. aborting quiz creation. question id={}", questionId);
                 throw questionNotFoundForQuizCreationException();
             } else {
                 AnswerableQuestion answerableQuestion = new AnswerableQuestion();
@@ -37,6 +44,7 @@ public class QuizService {
                 answerableQuestions.add(answerableQuestion);
             }
         }
+        log.debug("create. answerableQuestions={}", answerableQuestions);
 
         AnswerableQuestion.persist(answerableQuestions);
 
@@ -44,6 +52,7 @@ public class QuizService {
         quiz.questions = answerableQuestions;
         quiz.persist();
 
+        log.debug("create. quiz={}", quiz);
         return quiz;
     }
 
@@ -62,6 +71,7 @@ public class QuizService {
         }
 
         Quiz quiz = optionalQuiz.get();
+        log.debug("updateQuestionSelection. quiz={}", quiz);
 
         // Check if quiz is already finished
         if (quiz.isFinished) {
@@ -78,6 +88,7 @@ public class QuizService {
         }
 
         AnswerableQuestion answerableQuestion = optionalAnswerableQuestion.get();
+        log.debug("updateQuestionSelection. answerableQuestion={}", answerableQuestion);
 
         // Check if selection exists for the question and update
         Optional<Selection> foundSelection = answerableQuestion.linkedQuestion.selections.stream()
@@ -91,6 +102,8 @@ public class QuizService {
         }
 
         answerableQuestion.persist();
+
+        log.debug("updateQuestionSelection. final quiz={}", quiz);
         return quiz;
     }
 
@@ -104,6 +117,7 @@ public class QuizService {
         }
 
         Quiz quiz = optionalQuiz.get();
+        log.debug("finishQuiz. quiz={}", quiz);
 
         if (quiz.isFinished) {
             throw quizAlreadyFinishedException();
@@ -114,6 +128,35 @@ public class QuizService {
         quiz.finishedAt = LocalDateTime.now();
         quiz.persist();
 
+        log.debug("finishQuiz. final quiz={}", quiz);
         return quiz;
+    }
+
+    public ResultResponse getResult(Long quizId) {
+        // Find quiz
+        Optional<Quiz> optionalQuiz = Quiz.findByIdOptional(quizId);
+
+        if (optionalQuiz.isEmpty()) {
+            throw quizNotFoundException();
+        }
+
+        Quiz quiz = optionalQuiz.get();
+        log.debug("getResult. quiz={}", quiz);
+
+        if (!quiz.isFinished) {
+            throw quizNotFinishedYetException();
+        }
+
+        // Perform calculations
+        final long totalAnsweredQuestions = quiz.questions.stream()
+                .filter(answerableQuestion -> answerableQuestion.chosenSelection != null)
+                .count();
+
+        final long totalCorrectQuestions = quiz.questions.stream()
+                .filter(answerableQuestion -> answerableQuestion.chosenSelection != null)
+                .filter(answerableQuestion -> answerableQuestion.chosenSelection.isCorrect())
+                .count();
+
+        return new ResultResponse(quiz.questions.size(), totalAnsweredQuestions, totalCorrectQuestions);
     }
 }
